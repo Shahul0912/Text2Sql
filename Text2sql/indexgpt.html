@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinOps Analyzer</title>
+    <style>
+        body {
+            font-family: 'Inter', 'Söhne', 'Helvetica', 'Arial', sans-serif;
+            background-color: #f0f4f8;
+            color: #2d3748;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .main {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin:1rem 0;
+            color: #4a5568;
+            text-align: center;
+        }
+
+        .content {
+            display: flex;
+            flex-grow: 1;
+            gap: 2rem;
+            overflow: hidden;
+            justify-content: center;
+            padding-bottom: 5px;
+        }
+        
+
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            width: 60%;
+            transition: width 0.3s ease;
+        }
+
+        .content.table-visible .left-column {
+            width: 55%;
+        }
+
+        .history {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            margin-bottom: 1rem;
+        }
+
+        .tableSection {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 45%;
+            position: relative;
+            display: none;
+            flex-direction: column;
+        }
+
+        .tableHeader {
+            padding: 0.2rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .tableContent {
+            flex-grow: 1;
+            overflow-y: auto;
+
+        }
+
+        .tableFooter {
+            padding: 1rem;
+            border-top: 1px solid #e2e8f0;
+ 
+           
+        }
+
+        .chat {
+            background-color: #edf2f7;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            max-width: 80%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .chat.sent {
+            align-self: flex-end;
+            background-color: #ebf8ff;
+        }
+
+        .chat.received {
+            align-self: flex-start;
+        }
+
+        .inputBox {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #promptForm {
+            display: flex;
+            width: 100%;
+        }
+
+        #promptInput {
+            flex-grow: 1;
+            border: none;
+            font-size: 1rem;
+            padding: 0.75rem 1rem;
+            background-color: #edf2f7;
+            border-radius: 8px;
+        }
+
+        #promptInput:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #63b3ed;
+        }
+
+        #promptBtn {
+            background-color: #4299e1;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0.75rem 1rem;
+            margin-left: 0.5rem;
+            color: #ffffff;
+            transition: background-color 0.3s ease;
+        }
+
+        #promptBtn:hover {
+            background-color: #3182ce;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            background-color: #ffffff;
+            z-index: 1;
+        }
+
+        th {
+            background-color: #edf2f7;
+            font-weight: 600;
+        }
+
+        .attachment {
+            display: flex;
+            align-items: center;
+            background-color: rgb(237, 242, 247);
+            border-radius: 6px;
+            padding: 0.5rem 0.5rem;
+            cursor: pointer;
+            border:1px solid grey;
+            transition: background-color 0.3s ease;
+            gap:0.7em;
+        }
+
+        .attachment:hover {
+            border:1px solid rgb(145, 144, 144);
+            background-color:rgb(228, 231, 235);
+        }
+        .attachment p{
+            margin:0 5px;
+            font-size:1.125em;
+            line-height:0.7rem;
+        }
+
+        .attachment svg {
+            width: 25px;
+            height: auto;
+ 
+        }
+        .attachment div{
+            border-left: 1px solid grey;
+            padding-left:0.7em;
+        }
+
+        .closeBtn {
+            background-color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            width: 2rem;
+            height: 2rem;
+            cursor: pointer;
+            font-size: 1.25rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .closeBtn:hover {
+            background-color: #e2e8f0;
+        }
+
+        @media (max-width: 1200px) {
+            .content, .content.table-visible {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .left-column, .content.table-visible .left-column, .tableSection {
+                width: 100%;
+            }
+
+            .history {
+                max-height: 50vh;
+             
+            }
+
+            .tableSection {
+                margin-top: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <p class="logo">DataInsights AI</p>
+        
+        <div class="content" id="content">
+            <div class="left-column">
+                <div class="history" id="history"></div>
+                <div class="inputBox">
+                    <form id="promptForm" onsubmit="sendPrompt(event)">
+                        <input id="promptInput" placeholder="Enter a prompt here">
+                        <button id="promptBtn" type="submit">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M7 11L12 6L17 11M12 18V7" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                        <button id="promptBtn" type="button" onclick="newConversation()">
+                                  <img width="27" height=auto src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhLS0gQ3JlYXRlZCB3aXRoIElua3NjYXBlIChodHRwOi8vd3d3Lmlua3NjYXBlLm9yZy8pIC0tPgoKPHN2ZwogICB3aWR0aD0iNTBtbSIKICAgaGVpZ2h0PSI1MG1tIgogICB2aWV3Qm94PSIwIDAgMTg4Ljk3NjM4IDE4OC45NzYzOCIKICAgdmVyc2lvbj0iMS4xIgogICBpZD0ic3ZnMSIKICAgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIKICAgc29kaXBvZGk6ZG9jbmFtZT0iY2hhdC5zdmciCiAgIGlua3NjYXBlOnZlcnNpb249IjEuMy4yICgxOjEuMy4yKzIwMjQwNDI2MTUwOSswOTFlMjBlZjBmKSIKICAgeG1sbnM6aW5rc2NhcGU9Imh0dHA6Ly93d3cuaW5rc2NhcGUub3JnL25hbWVzcGFjZXMvaW5rc2NhcGUiCiAgIHhtbG5zOnNvZGlwb2RpPSJodHRwOi8vc29kaXBvZGkuc291cmNlZm9yZ2UubmV0L0RURC9zb2RpcG9kaS0wLmR0ZCIKICAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIgogICB4bWxuczpzdmc9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48c29kaXBvZGk6bmFtZWR2aWV3CiAgICAgaWQ9Im5hbWVkdmlldzEiCiAgICAgcGFnZWNvbG9yPSIjZmZmZmZmIgogICAgIGJvcmRlcmNvbG9yPSIjMDAwMDAwIgogICAgIGJvcmRlcm9wYWNpdHk9IjAuMjUiCiAvPjxkZWZzCiAgICAgaWQ9ImRlZnMxIiAvPjxnCgogICAgIGlkPSJsYXllcjEiPjxwYXRoCiAgICAgICBzdHlsZT0iZmlsbDojZmZmZmZmO3N0cm9rZS13aWR0aDowLjIzODkyMztpbWFnZS1yZW5kZXJpbmc6Y3Jpc3AtZWRnZXMiCiAgICAgICBkPSJtIDU4LjU2NTM1NSwxNDAuOTAzNzIgYyAtMC4zOTQyMzgsLTAuMjQzNSAtMC45MzE4MSwtMC42ODQzMiAtMS4xOTQ2MTQsLTAuOTc5NTggbCAtMC40Nzc4NTgsLTAuNTM2ODUgLTAuMTE5NDI3LC04Ljg3MzMxIC0wLjExOTQyOCwtOC44NzMzNCAtMS40MzM1MzIsLTAuMjY2NDUgYyAtNS45MDkwMDYsLTEuMDk4MjIgLTEwLjAyNTg1OSwtNC44MDI3IC0xMS40NTE1LC0xMC4zMDQ0IGwgLTAuMzc1MTI1LC0xLjQ0NzY2IFYgODcuOTQ5MjA1IDY2LjI3NjMwOCBsIDAuMzc2OTA3LC0xLjQ2ODAyNCBjIDEuMTY4NTAxLC00LjU1MTM5NCA0LjI0MDg4MywtNy44OTU5NTYgOC44OTA2ODMsLTkuNjc4MzUzIGwgMS42MDMzNjEsLTAuNjE0NjE2IDE2LjcyNDUyNiwtMC4wNjg1MiAxNi43MjQ1MywtMC4wNjg1MiAwLjkzMDgxLDAuNTM4NzgxIGMgMi4zMzMxMiwxLjM1MDQ2MyAyLjQyNTYzLDQuODIwMTU5IDAuMTY4NjUsNi4zMjc4NzIgbCAtMC44MTE4NCwwLjU0MjM0NSBIIDcyLjAzMzkwOCA1Ni4wNjYzMSBsIC0xLjAyMDI0NiwwLjM5NjA2MiBjIC0xLjU5MTgsMC42MTc5MjYgLTIuOTQ3NzU3LDEuODQ4MDQ5IC0zLjYzMjQxOCwzLjI5NTMyOCBsIC0wLjYxMzI4LDEuMjk2MzcxIHYgMjEuMTc0MTYxIDIxLjE3NDE5NSBsIDAuNjEzMjgsMS4yOTYzNyBjIDAuNjg0NjYxLDEuNDQ3MjYgMi4wNDA2MTgsMi42Nzc0IDMuNjMyNDE4LDMuMjk1MzMgbCAxLjAyMDI0NiwwLjM5NjA2IGggMi43MDc0MzkgMi43MDc0MzkgbCAwLjc5ODkxMiwwLjUzODQgYyAwLjQzOTQsMC4yOTYxMSAxLjAxOTc1NywwLjkxNDMxIDEuMjg5NjY4LDEuMzczNzkgbCAwLjQ5MDc1NSwwLjgzNTQyIDAuMTE5NDI4LDYuMjQ1OTcgMC4xMTk0MjcsNi4yNDU5OCA4LjQ4MTc0LC03LjI4MDE4IGMgNC42NjQ5NSwtNC4wMDQxMSA4Ljc3MjA3LC03LjQzMjk5IDkuMTI2OTEsLTcuNjE5NzcgbCAwLjY0NTE0LC0wLjMzOTYxIDE3LjYzMjM3MiwtMC4wMDQgMTcuNjMyMzQsLTAuMDA0IDEuMDY4MzYsLTAuNDg0NjIgYyAxLjcyMzM2LC0wLjc4MTczIDIuNTQ3MTMsLTEuNTU0MTEgMy4zMzEzOSwtMy4xMjM1NSBsIDAuNzM3MDcsLTEuNDc1MDIgdiAtNi4xMzg0NyAtNi4xMzg0ODUgbCAwLjU0MjMzLC0wLjgxMTgzIGMgMS41NTA5OSwtMi4zMjE2NyA1LjA2NjQ0LC0yLjE2NTg0IDYuMzM5MTMsMC4yODEgbCAwLjU1MDA3LDEuMDU3NDcgLTAuMDkyMyw2LjY4OTgxNSAtMC4wOTIzLDYuNjg5ODIgLTAuNTkyNDEsMS41NzUyNiBjIC0xLjU5OTc1LDQuMjUzODggLTQuMjUwODksNi45MDg3NiAtOC41NDM4Nyw4LjU1NTg0IGwgLTEuNTc1MjYsMC42MDQzNyAtMTcuMzU0MiwwLjEyNzQ5IC0xNy4zNTQyNTIsMC4xMjc0OCAtMTAuNTc4NjYsOS4wNzkwNCBjIC01LjgxODI3Nyw0Ljk5MzQ3IC0xMS4wNjM5NjMsOS40Mjg0NSAtMTEuNjU3MTEyLDkuODU1NTIgbCAtMS4wNzg0MzIsMC43NzY0OSBIIDYwLjM3NDYyIGMgLTAuNjQ1NDE3LDAgLTEuMzg2MjkxLC0wLjE4MjIxIC0xLjgwOTU5MSwtMC40NDM2MiB6IE0gMTE4LjUzNDcyLDg3LjkyOTAxNSBDIDk3LjI4OTQ1OCw4NC4xOTc2NTUgODkuMDMyMTE4LDU3Ljc3NjE5MyAxMDQuMzExMzYsNDIuNDE3NzE5IGMgMTIuODM3MTQsLTEyLjkwMzc0MiAzNC44OTc3OCwtOS4zODc0ODQgNDIuOTkxNSw2Ljg1MjQ0MSA5Ljg5OTc1LDE5Ljg2Mzc1MiAtNi45Mzk2LDQyLjQ5MjY2NSAtMjguNzY4MTQsMzguNjU4ODU1IHogbSA4LjQ0MjI3LC03LjM5MzA5IGMgNi4yNzQ0MiwtMS4xOTAyNSAxMS43NzUyNywtNS42NTMzNzUgMTQuMjUwNDUsLTExLjU2MjEwNSA2LjcxNTA3LC0xNi4wMzAzMDIgLTkuNDUzNjksLTMyLjIxOTE4OSAtMjUuNDQwMzEsLTI1LjQ3MTk4NCAtNy4xNjUwNywzLjAyNDAzOCAtMTEuOTQ2MSwxMC4xOTg3MjEgLTExLjk0NjEsMTcuOTI3MDU1IDAsOC4yODgyMjEgNC45ODk0NiwxNS4yNDI4NDMgMTMuMjYwMTYsMTguNDgyODQ0IDIuNDEyODYsMC45NDUyMiA2Ljc0MTI0LDEuMjE4OCA5Ljg3NTgsMC42MjQxOSB6IG0gLTUuOTIwNjMsLTYuMjMxMDE4IGMgLTEuMjE5NTYsLTEuMDI2MjA2IC0xLjMxODg2LC0xLjM5MzQxOSAtMS40NDY0OSwtNS4zNDk5ODggbCAtMC4xMTk0MywtMy43MDMyOSAtMy43MDMyOSwtMC4xMTk0MjcgYyAtMy45NTY1NywtMC4xMjc3MDEgLTQuMzIzNzYsLTAuMjI2OTEyIC01LjM0OTk3LC0xLjQ0NjQ3MiBsIC0wLjYyMzA4LC0wLjc0MDQ5MyB2IC0xLjUzODE3NCAtMS41MzgxNzUgbCAwLjc3NjQ5LC0wLjg0NTM0NiBjIDAuOTk5NjUsLTEuMDg4Mjc1IDEuODkxMjIsLTEuMjg1MDg2IDUuODUzNiwtMS4yOTIyMTQgbCAzLjE2NTcsLTAuMDA2NCB2IC0zLjQ3MTk5MyAtMy40NzIwNSBsIDAuMzMzMDQsLTAuNzk3MDQ2IGMgMC4xODMyNywtMC40MzgzODEgMC43MDQsLTEuMDgwMDIyIDEuMTU3NDMsLTEuNDI1ODc0IGwgMC44MjQ0MSwtMC42Mjg3ODcgMS4yOTE1MSw5LjU1ZS00IDEuMjkxNTEsOS41NWUtNCAwLjc2MzUzLDAuNDY1NTMzIGMgMC40MTk5MywwLjI1NjA1OSAwLjk1NzUsMC43NjE1MzYgMS4xOTQ2MSwxLjEyMzMxOCBsIDAuNDMxMDksMC42NTc3NDIgMC4wODQyLDMuNzQ5MjE1IDAuMDg0MiwzLjc0OTE5NCAzLjc0OTIxLDAuMDg0MjIgMy43NDkyMiwwLjA4NDIxIDAuNjU3NzQsMC40MzEwODQgYyAwLjM2MTc2LDAuMjM3MTE2IDAuODY3MjQsMC43NzQ2ODggMS4xMjMzLDEuMTk0NjE0IGwgMC40NjU1MywwLjc2MzUwOCB2IDEuMjkxNTM1IDEuMjkxNTEzIGwgLTAuNjI4NzksMC44MjQzODkgYyAtMC4zNDU4MywwLjQ1MzQyMSAtMC45ODc0NywwLjk3NDI3NyAtMS40MjU4NSwxLjE1NzQ0OSBsIC0wLjc5NzA0LDAuMzMzMDE4IGggLTMuNDcyMTggLTMuNDcyMDUgbCAtMC4wMDYsMy4xNjU3MTggYyAtMC4wMDYsMy45NjIzODIgLTAuMjAzODUsNC44NTM5NTEgLTEuMjkyMjMsNS44NTM1NzggbCAtMC44NDUzNSwwLjc3NjUxMSBoIC0xLjUzODE1IC0xLjUzODIgeiIKICAgICAgIGlkPSJwYXRoMSIgLz48L2c+PC9zdmc+Cg==">
+
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="tableSection" id="tableSection">
+                <div class="tableHeader">
+                    <button class="closeBtn" onclick="emptyTableSection()">&times;</button>
+                </div>
+                <div class="tableContent" id="tableContent"></div>
+                <div class="tableFooter" id="tableFooter">
+                    <button class="closeBtn" onclick=decrement()>&lt;</button>
+                    <button class="closeBtn" onclick=increment()>&gt;</button>
+                    <span id="tableTitle">Table Title</span>
+                </div>  
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // The JavaScript remains unchanged
+        const historybox = document.getElementById('history');
+        const inp = document.getElementById('promptInput');
+        const inputform = document.getElementById('promptForm');
+        const tablesection = document.getElementById('tableSection');
+        const tablecontent = document.getElementById('tableContent');
+        const tableTitle = document.getElementById('tableTitle');
+        let currentArtifactIndex=0;
+        const content = document.getElementById('content');
+        let storedTables = [];
+        inp.focus();
+
+        function sendPrompt(event) {
+            if (event) {
+                event.preventDefault();
+            }
+            inputform.disabled = true;
+            
+            const inputdata = inp.value;
+            if (inputdata === '') return;
+            inp.value = '';
+            
+            const entered_prompt = document.createElement('p');
+            entered_prompt.textContent = inputdata;
+            entered_prompt.className = 'chat sent';
+            
+            const wait_message = document.createElement('p');
+           
+            
+            historybox.appendChild(entered_prompt);
+            showWaitingMessage()
+            historybox.scrollTop = historybox.scrollHeight;
+            
+            let url = '/sendPrompt';
+            let data = { prompt: inputdata };
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            }).then(response => response.json())
+            .then((response) => {
+                handleResponse(response);
+            }).catch((err) => {
+                console.log(err);
+            });
+        }
+
+        function emptyTableSection() {
+            tablecontent.innerHTML = '';
+            tablesection.style.display = 'none';
+            content.classList.remove('table-visible');
+        }
+
+        function handleResponse(response) {
+            inputform.disabled = false;
+            historybox.removeChild(historybox.lastChild);
+            const responseHasTable = response.messages.some((res) => res.type === 'table');
+            let currentTableIndex = storedTables.length;
+
+            for (let message of response.messages) {
+                if (message.type === 'text') {
+                    const resp = document.createElement('p');
+                    resp.className = 'chat received';
+                    resp.textContent = message.data;
+                    if (responseHasTable) {
+                      
+                        const attachment = document.createElement('button');
+                        attachment.className = 'attachment';
+                        attachment.indexValue=currentTableIndex
+                        attachment.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" height:100% width:auto viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                            </svg>
+                            <div><p>Artifact ${currentTableIndex +1}</p><span>click to open</span</div>
+                        `;
+                        attachment.onclick = function() {
+                            let index=this.indexValue
+                            const tableContents = storedTables[index];
+                            currentArtifactIndex=index;
+                            tableContents.title = 'Artifact ' + (index+ 1);
+                            displayTable(tableContents);
+                        };
+                        resp.appendChild(attachment);
+                    }
+                    historybox.appendChild(resp);
+                } else if (message.type === 'table') {
+                    storedTables.push(message.data);
+                    currentArtifactIndex=storedTables.length-1
+                    emptyTableSection();
+                    message.data.title='Artifact '+storedTables.length
+                    displayTable(message.data,100);
+                }
+            }
+        }
+
+        function displayTable(tableData,delay) {
+            emptyTableSection();
+            tablesection.style.display = 'flex';
+            content.classList.add('table-visible');
+
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            tableTitle.textContent=tableData.title
+            tablecontent.appendChild(table);
+
+            for (let column of tableData.columns) {
+                const th = document.createElement('th');
+                th.textContent = column;
+                headerRow.appendChild(th);
+            }
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            table.appendChild(tbody);
+          
+            
+            if (!delay){
+                let delay=100
+            }
+            
+
+            tableData.rows.forEach((row, index) => {
+                setTimeout(() => {
+                    const tr = document.createElement('tr');
+                    for (let cellData of row) {
+                        const td = document.createElement('td');
+                        td.textContent = cellData;
+                        tr.appendChild(td);
+                    }
+                    tbody.appendChild(tr);
+                }, index * delay);
+            });
+
+            
+
+        }   
+
+        function increment(){
+
+            if(currentArtifactIndex==(storedTables.length-1)){
+                return
+            }
+            
+            let tabledata=storedTables[currentArtifactIndex+1]
+        
+            currentArtifactIndex++;
+            tabledata.title='Artifact '+(currentArtifactIndex+1)
+            displayTable(tabledata)
+        }
+
+        function decrement(){
+
+            if(currentArtifactIndex==0){
+                return
+            }
+
+    
+        
+            currentArtifactIndex--;
+            let tabledata=storedTables[currentArtifactIndex]
+            tabledata.title='Artifact '+(currentArtifactIndex+1)
+            
+            
+            displayTable(tabledata)
+        }
+
+        
+        async function newConversation(){
+
+   
+            
+            let response= await fetch('/newConversation')
+            if(!response.ok)
+                console.log('cannot create new conversation')
+            else
+                document.location='/'
+            
+        
+        }
+
+    function showWaitingMessage(){
+    wait_message=document.createElement('p')
+    
+    wait_message.innerHTML='<span id="status">Processing</span><pre  style="display:inline" id="progress" progress=0></pre>'
+    wait_message.className='chat received'
+    historybox.appendChild(wait_message)
+
+    let status=document.getElementById('status')
+    
+    setTimeout(()=>{
+        status.textContent='Fetching results'
+    },3000)
+
+    setTimeout(()=>{
+        status.textContent='Analysing results'
+    },6000)
+
+    let progressIncrement=setInterval(()=>{
+        let progress=document.getElementById('progress')
+        if(progress){
+            let progresvalue=progress.getAttribute('progress')
+           
+            progresvalue=(progresvalue%4)+1
+            progress.setAttribute('progress',progresvalue)
+            
+            progress.textContent=`${'.'.repeat(progresvalue)}${' '.repeat(4-progresvalue)}` 
+        }
+        else{
+            clearInterval(progressIncrement)
+        }
+    },500)
+}
+
+
+
+    </script>
+</body>
+</html>

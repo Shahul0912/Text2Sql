@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "C:/chatbot"
+		},
+		{
+			"path": "../OpenAIchatbot"
+		},
+		{
+			"path": "C:/streamlitapp"
+		},
+		{
+			"path": "../StreamlitChatbot"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "Text2speech"
+	}
+}
